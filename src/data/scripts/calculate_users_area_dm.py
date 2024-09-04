@@ -32,6 +32,30 @@ def add_features(df):
                             .filter(F.col('diff_date')>27)\
                             .select(F.col('user_id').alias('h_user_id'), 
                                     F.col('lag_city').alias('home_city'))
+    # old code
+    #home_city_df = df.withColumn('lag_city', 
+    #                       F.lag('city_name').over(Window.partitionBy('user_id').orderBy('date')))\
+    #                        .filter((F.col('city_name')!= F.col('lag_city'))|(F.col('lag_city').isNull()))\
+    #                        .withColumn('lag_date',
+    #                                   F.lag('date').over(Window.partitionBy('user_id').orderBy('date')))\
+    #                        .withColumn('diff_date', F.datediff( F.col('date'), F.col('lag_date')))\
+    #                        .filter(F.col('diff_date')>27)\
+    #                        .select(F.col('user_id').alias('h_user_id'), 
+    #                                F.col('lag_city').alias('home_city'))
+    
+    home_city_df = df.withColumn("row_dt",
+                            F.row_number().over(Window.partitionBy("user_id", "city_name").orderBy(F.col("date").desc())))\
+                                .filter(F.col("row_dt") > 27)\
+                                .withColumn("rn_row_dt",
+                            F.row_number().over(Window.partitionBy("user_id").orderBy(F.col("row_dt").desc())))\
+                                .filter(F.col("rn_row_dt") == 1)\
+                                .withColumnRenamed("user_id", "h_user_id")\
+                                .withColumnRenamed("city_name", "home_city")\
+                                .drop("row_dt", "rn_row_dt", "date")
+
+
+
+
     
     travel_date_df = df.withColumn('lag_city', 
                            F.lag('city_name').over(Window.partitionBy('user_id').orderBy('date')))\

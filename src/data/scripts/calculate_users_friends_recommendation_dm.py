@@ -76,7 +76,7 @@ def add_features(df, earth_radius_km):
             .filter((F.col('distance_users')<=1) & (F.col('user')<F.col('user_right')))
     result_df = min_distance\
             .join(subscription_df, on=["user", "user_right"], how="leftsemi")\
-            .join(users_pairs, on=["user", "user_right"], how="leftsemi")\
+            .join(users_pairs, on=["user", "user_right"], how="leftanti")\
             .join(location_with_time, on="user", how="left")\
             .withColumn('processed_dttm', F.current_timestamp())\
             .select(
